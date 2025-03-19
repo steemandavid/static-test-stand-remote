@@ -1,5 +1,5 @@
 #include "outputs.h"
-#include "tasksettings.h"
+#include "RTOS.h"
 
 
 TaskHandle_t toggleTaskHandle[10]; // Array to hold task handles (supports 10 tasks maximum)

@@ -2,7 +2,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "RTOS.h"
-#include "tasksettings.h"
+
 
 // RTOS task handles
 TaskHandle_t xHandleMainLoop = NULL;
