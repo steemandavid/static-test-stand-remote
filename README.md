@@ -1,44 +1,54 @@
-# remote
 
-**Static test stand - remote unit code**
+# Remote Unit for Static Test Stand
 
-The static test stand system consists of a base station and a remote unit. The base station is near the motor and serves to ignite the motor and measure different parameters before, during, and directly after the burn. The remote unit communicates over WiFi with the base station, displaying states and status messages while transmitting arm and ignition signals to the base station.
+**Overview**
 
-## Basic functionality
+The remote unit is part of a static test stand system designed for safe motor testing. It works in conjunction with a base station, which is located near the motor. The base station is responsible for igniting the motor and logging various parameters before, during, and immediately after the burn. The remote unit acts as a wireless head unit, communicating with the base station over WiFi to display statuses, show system messages, and send arm and ignition commands to the base station.
 
-The remote unit serves two purposes:
-- display the state and messages of/from the base station
-- read Arm and Ignition user input and transmit it to the base station
+## System Overview
 
-The remote merely functions as a wireless "head unit" for the base station. It allows monitoring from a safe distance, as well as initiating the static test. All workflow for a test is ran by the base station.
+The system consists of two key components:
 
-The remote unit display the following:
-- Top line of the display: the current state of the state machine running on the base station
-- Top line of the display, right-hand side: a value representing the quality of the wifi link between remote and base station. This shows if the remote is (nearly) out of range
-- 5 lines of messages from the base station. These lines scroll in a "terminal-style"; the most recent line is added to the bottom and pushes the other lines up.
+- **Base Station**: Located next to the motor, it controls the ignition process and collects data during the test.
+- **Remote Unit**: This unit serves as a user interface for the base station. It communicates wirelessly with the base station to display information and allow user interaction.
 
+### Primary Functions of the Remote Unit:
+- **Display**: The remote unit displays the current state of the base station’s state machine and other status messages.
+- **Control**: It receives user inputs for arming the system and triggering ignition, then transmits these commands to the base station.
 
-## Hardware
+The remote unit allows users to monitor and control the static test from a safe distance. It acts as a "head unit" that enables the operator to initiate the test, while the actual workflow and testing procedures are executed by the base station.
 
-The hardware consists of (also see pins.h):
-- an ESP32 development board
-- a built)in LED on the ESP32 dev board (LED_BUILTIN)
-- an USB 1S LiPo charger module with integrated boost converter to power the ESP32 board (5V)
-- An ignition button (BUTTON_BUTTON) with integrated LED ring around the button (LED_BUTTON)
-- An arm switch, SPDT (SWITCH_ARM)
-- An SSD1306 OLED display connected over I²C
-- A voltage divider with one side towards ground, the other side towards battery +, and the middle connected to an ESP32 ADC input pin (VOLT_BAT)
-- a buzzer with integrated oscillator, connected through a BC547 transistor to an ESP32 output pin (BUZZER)
+### Display Information
+
+The remote unit's display provides the following information:
+- **Top Left Corner**: Displays the current state of the base station’s state machine.
+- **Top Right Corner**: Shows a value representing the quality of the WiFi link between the remote unit and the base station. This indicates whether the remote unit is nearing the edge of its wireless range.
+- **Message Area**: The remaining five lines of the display are used to show messages from the base station. These messages scroll in a terminal-style fashion, with the most recent message appearing at the bottom and older messages scrolling upward.
+
+## Hardware Components
+
+The hardware setup consists of the following components (also see `pins.h` for pin assignments):
+
+- **ESP32 Development Board**: The core of the remote unit, running the firmware.
+- **Built-in LED**: On the ESP32 development board (controlled by `LED_BUILTIN`).
+- **USB 1S LiPo Charger Module**: Charges the battery and powers the ESP32 via an integrated boost converter (5V output).
+- **Ignition Button**: A button with an integrated LED ring (controlled by `BUTTON_BUTTON` and `LED_BUTTON` respectively).
+- **Arm Switch**: A Single Pole Double Throw switch (controlled by `SWITCH_ARM`).
+- **OLED Display**: An SSD1306 OLED display, connected via I²C to show system status and messages.
+- **Battery Voltage Divider**: A simple voltage divider circuit to monitor the battery voltage. One side is connected to ground, the other to the battery positive terminal, and the middle is connected to an ESP32 ADC input pin (labeled `VOLT_BAT`). It converts the battery voltage (4.2V - 0V) down to a safe range for the ESP32's ADC (3.3 - 0V).
+- **Buzzer**: A buzzer with an integrated oscillator, controlled by a BC547 transistor, connected to an ESP32 output pin (labeled `BUZZER`).
 
 ## Code Structure
 
-The code consists of the following files:
+The codebase is organized into several files, each serving a distinct function:
 
-- **remote.ino**: The main sketch
-- **RTOS**: Contains code to initialize the RTOS, some RTOS tasks, and settings for task priorities and which core to run on
-- **SSD1306**: SSD1306 OLED display code
-- **buzzer**: Contains code to beep the buzzer
-- **debounce**: Button debounce code, used for ignition button and arm switch
-- **espnow**: WiFi communication protocol code
-- **outputs**: Code to toggle and switch on and off output pins
-- **pins**: Pin definitions and initialization code
+- **`remote.ino`**: The main Arduino sketch that ties everything together and runs the remote unit’s logic.
+- **`RTOS`**: Code responsible for initializing and managing the Real-Time Operating System (RTOS), setting up tasks, and defining task priorities and core assignments.
+- **`SSD1306`**: Contains code for controlling the SSD1306 OLED display, which displays system status and messages.
+- **`buzzer`**: Code to control the buzzer, used for auditory feedback during operation.
+- **`debounce`**: Implements debouncing for the ignition button and arm switch to prevent false triggering due to noisy button presses.
+- **`espnow`**: Contains the WiFi communication protocol using ESPNOW for communication between the remote unit and the base station.
+- **`outputs`**: Code to control the ESP32 output pins, including toggling and turning pins on and off for various actions.
+- **`pins`**: Defines the pin assignments and initialization code for the hardware components.
+
+This structured approach allows for modular updates and easy debugging. Each component of the system has a dedicated section in the code, making it clear and maintainable.
