@@ -1,7 +1,7 @@
 
 # Remote Unit for Static Test Stand
 
-**Overview**
+## Description
 
 The remote unit is part of a static test stand system designed for safe motor testing. It works in conjunction with a base station, which is located near the motor. The base station is responsible for igniting the motor and logging various parameters before, during, and immediately after the burn. The remote unit acts as a wireless head unit, communicating with the base station over WiFi to display statuses, show system messages, and send arm and ignition commands to the base station.
 
@@ -52,3 +52,11 @@ The codebase is organized into several files, each serving a distinct function:
 - **`pins`**: Defines the pin assignments and initialization code for the hardware components.
 
 This structured approach allows for modular updates and easy debugging. Each component of the system has a dedicated section in the code, making it clear and maintainable.
+
+## To do
+
+- Implement reading of battery voltage
+- Add state machine to implement logic (reacting to buttons, updating display, reading battery voltage, controlling LEDs and buzzer)
+- Implement a "ping-like" protocol which pings the base and will be used to assess wifi link quality (out of range detection)
+- Implement protocol to send commands from remote to base
+- Implement protocol to send state info and messages from base to remote
