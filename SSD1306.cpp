@@ -1,23 +1,46 @@
 #include <Arduino.h>
 #include "SSD1306.h"
+#include "RTOS.h"
 
-// Define the display object (ensure the screen dimensions and reset pin are correct)
+// Define the display object
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-void UpdateDisplay() {
-  display.clearDisplay();
-  display.drawLine(0, 16, SCREEN_WIDTH, 16, WHITE);  // Horizontal line at the top of the blue area of the screen 
-  display.drawLine(0, 17, SCREEN_WIDTH, 17, WHITE);  // Horizontal line at the top of the blue area of the screen 
-  display.setTextSize(2); // set the font size, supports sizes from 1 to 8
-  display.setCursor(0, 0);
-  display.print(random(0, 999));
-  display.setTextSize(1); // set the font size, supports sizes from 1 to 8
-  for (int i=0; i<5; i++) { // Display line 2 through 6
-    display.setCursor(0, 11+9*(i+1)); // put cursor on the correct y position for the respective line
-    display.print(random(0, 999));
-    delay(10);
+// Define task handle
+//TaskHandle_t xUpdateDisplayTaskHandle = NULL;
+
+
+extern UpdateDisplayStruct DisplayData = {0, 0, 99, "", "", "", "", ""};
+
+
+void UpdateDisplayTask(void *pvParameters) {
+  while (1) {
+    display.clearDisplay();
+
+    // Draw horizontal line
+    display.drawLine(0, 16, SCREEN_WIDTH, 16, WHITE);  
+    display.drawLine(0, 17, SCREEN_WIDTH, 17, WHITE);  
+
+    // Set text size and print BaseState and RSSI
+    display.setTextSize(2);
+    display.setCursor(0, 0); 
+    display.print(DisplayData.BaseState);
+
+    display.setCursor(SCREEN_WIDTH-4, 0); 
+    display.print(DisplayData.RSSI);
+
+    // Set smaller text size and display lines 2-6
+    display.setTextSize(1); 
+    for (int i = 0; i < 5; i++) {
+      display.setCursor(0, 11 + 9 * (i + 1));
+      display.print(DisplayData.Line[i]);
+    }
+
+    // Refresh the display
+    display.display();
+
+    // Task delay to prevent high CPU usage
+    vTaskDelay(DISPLAY_REFRESHRATE / portTICK_PERIOD_MS);  // Adjust delay time as needed
   }
-  display.display();
 }
 
 void SetupDisplay() {

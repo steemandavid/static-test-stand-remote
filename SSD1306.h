@@ -14,7 +14,22 @@
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 
+#define DISPLAY_REFRESHRATE 500 // in ms
+
+//TaskHandle_t xUpdateDisplayTaskHandle;
+
+
 extern Adafruit_SSD1306 display;
 
-void UpdateDisplay();
+struct UpdateDisplayStruct {
+  uint8_t BaseState;
+  uint8_t Command;
+  int8_t RSSI;
+  String Line[5];
+};
+
+extern UpdateDisplayStruct DisplayData;
+
+
+void UpdateDisplayTask(void *pvParameters);
 void SetupDisplay();

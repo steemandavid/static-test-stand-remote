@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "espnow.h"
+#include "SSD1306.h"
 
 uint8_t broadcastAddress[] = {0xE4, 0x65, 0xB8, 0x25, 0x8A, 0xA0}; // base station
 //uint8_t broadcastAddress[] = {0x10, 0x97, 0xBD, 0xCC, 0xED, 0xBC}; // remote
@@ -10,45 +11,42 @@ extern MsgStruct MessageToSend;
 
 
 void SetupEspNow() {
-  // ESPNOW ///////////////////////////////////////
   Serial.println("Starting SetupEspNow()...");
-  Serial.print("Broadcast Address of peer: ");
-  for (int i = 0; i < 6; i++) {
-      Serial.printf("%02X", broadcastAddress[i]);
-      if (i < 5) Serial.print(":");
-  }
-  Serial.println("");
+  
+  EspNowInit();
 
-  if (!EspNowInit()) {
-      Serial.println("EspNow init failed");
-      return;
-  }
+  Serial.print("MAC Address for peer: ");
+  Serial.println(WiFi.macAddress());
 }
 
 
 bool EspNowInit(void) {
-    WiFi.mode(WIFI_STA);
+  // Ensure WiFi is properly initialized
+  WiFi.disconnect(true);
+  delay(100);
+  WiFi.mode(WIFI_STA);
+  delay(100);
 
-    if (esp_now_init() != ESP_OK) {
-        Serial.println("esp_now_init() failed");
-        return false;
-    }
+  if (esp_now_init() != ESP_OK) {
+      Serial.println("esp_now_init() failed");
+      return false;
+  }
 
-    esp_now_register_send_cb(OnDataSent);
-    esp_now_register_recv_cb(OnDataRecv);
+  esp_now_register_send_cb(OnDataSent);
+  esp_now_register_recv_cb(OnDataRecv);
 
-    memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-    peerInfo.channel = 0;
-    peerInfo.encrypt = false;
+  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+  peerInfo.channel = 0;
+  peerInfo.encrypt = false;
 
-    if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-        Serial.println("Failed to add peer");
-        return false;
-    } else {
-        Serial.println("Peer added successfully");
-    }
+  if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+      Serial.println("Failed to add peer");
+      return false;
+  } else {
+      Serial.println("Peer added successfully");
+  }
 
-    return true;
+  return true;
 }
 
 void EspNowSend(struct MsgStruct *Msg) {
@@ -65,9 +63,8 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 }
 
 void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *incomingData, int len) {
+  DisplayData.RSSI = info->rx_ctrl->rssi; // Extract RSSI directly
   memcpy(&MessageReceived, incomingData, sizeof(MessageReceived));
-  printf("Recv (OnDataRecv): %i %i %i %i %i %i --\n", 
-          MessageReceived.BaseState, MessageReceived.VbatRemote, 
-          MessageReceived.Button_Button, MessageReceived.Switch_Arm,
-          MessageReceived.Button_LED, MessageReceived.Buzzer);
+  printf("Recv (OnDataRecv): %i %i %s\n", 
+          MessageReceived.BaseState, MessageReceived.Command, MessageReceived.Data);
 }

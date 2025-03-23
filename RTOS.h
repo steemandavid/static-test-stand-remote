@@ -8,6 +8,8 @@
 #define MAINLOOPTASKPRIORITY 10
 #define BUTTONTASKPRIORITY 4
 #define TOGGLETASKPRIORITY 5
+#define UPDATEDISPLAYTASKPRIORITY 5
+
 
 // define on which core tasks run
 // Core 0 = wifi stack, core 1 = free (critical tasks should run here)
@@ -16,7 +18,7 @@
 #define MAINLOOPTASKCORE 1
 #define BUTTONTASKCORE 1
 #define TOGGLETASKCORE 1
-
+#define UPDATEDISPLAYTASKCORE 0
 
 
 
@@ -25,6 +27,7 @@ extern TaskHandle_t xHandleMainLoop;
 extern TaskHandle_t xHandleUpdateDisplay;
 extern TaskHandle_t xHandleIOhandler;
 extern TaskHandle_t xHandleButton_handler;
+extern TaskHandle_t xHandleUpdateDisplay;
 
 
 void MainLoop(void *parameter);

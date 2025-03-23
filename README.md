@@ -20,7 +20,7 @@ This repository is for the remote unit only. The base station has a separate rep
 
 The remote unit allows users to monitor and control the static test from a safe distance. It acts as a "head unit" that enables the operator to initiate the test, while the actual workflow and testing procedures are executed by the base station.
 
-### The display
+### The Display
 
 The remote unit's display provides the following information:
 - **Top Left Corner**: Displays the current state of the base station’s state machine.
@@ -29,7 +29,8 @@ The remote unit's display provides the following information:
 
 ### The Arm switch
 
-The Arm switch is a single pole double throw switch. The Arm switch is used to arm the test stand (going from safe mode to unsafe pre-ignition mode). To do this, the switch needs to be flipped up for at least 500ms and then flipped down again. The system will now enter arm mode (= the remote will send an Arm command to the base station). A protective cover prevents accidental flipping of the switch. 
+The Arm switch is a single pole double throw switch. The Arm switch is used to arm the test stand (going from safe mode to unsafe pre-ignition mode). To do this, the switch needs to be flipped up for at least 500ms and then flipped down again. 
+The remote will now send an Arm command to the base station.
 
 ### The Ignition Button
 
@@ -75,32 +76,41 @@ The logic of the remote is managed by a State Machine. It moves between the foll
 #### Init
 
 Initialization of peripherals, tasks, variables and functions.
+
 Afterwards, the state is set to Idle.
 
 #### Idle
 
 Give a low voltage warning and a critical voltage warning.
+
 Check wifi connection quality and react to connection issues.
-Check for Arm switch user input. 
-- If the Arm switch is flipped on, the buzzer will emit short beeps.
+
+Check for Arm switch user input
+- Once the Arm switch is flipped on, the buzzer will emit short beeps.
 - If the Arm switch was flipped on for 5 seconds, the state is set to Arm. 
-- If the Arm switch was flipped shorter than that time, the buzzer is set to off and the state machines stays in the Idle state.
+- If the Arm switch was flipped on for shorter than that time, the buzzer is set to off and the state machines stays in the Idle state.
+
+Check for Ignition button user input
+- If the button is pushed, add an error message to the display lines and beep an error signal.
 
 #### Arm
 
-The system is in Arm mode, waiting for the user to push the Ignition button. An Arm command is sent to the base station. The buzzer is switched on to indicate the danger of imminent ignition. 
+The system is in Arm mode, waiting for the user to push the Ignition button. An Arm command is sent to the base station. The buzzer is switched on to indicate the danger of imminent ignition. The LED ring around the Ignition button flashes rapidly.
 
 If the Ignition button is pushed (short push), an Ignition command is sent to the base station.
+
 If the Ignition isn't pushed with 10 seconds, the Arm mode times out and the system returns to idle state.
 
 #### Ignite
 
 An Arm command is sent to the base station. The buzzer is switched off.
+
 Afterwards, the state is set to End.
 
 #### End
 
 The static test is over. The remote stays locked in this state until it is powered off.
+
 
 ### Background tasks
 
@@ -130,8 +140,52 @@ Handles the exchange of messages between the remote unit and the base station ov
 - Filter the read values using a simple filter.
 - Report low battery voltage to the state machine. 
 
+#### Communications protocol
+
+##### Packet structure
+
+**State**: an int8 containing the current state of the base station 
+**Command**: an int8 containing a command
+
+Output commands:
+- 0x01: Button LED on for x seconds
+- 0x02: Button LED blink
+- 0x03: Buzzer on for x seconds 
+- 0x04: Buzzer blink
+- 0x05: Built-in LED on for x seconds 
+- 0x06: Built-in LED blink 
+For each of these, either the number of seconds on or the number of times to blink is passed in the data variable.
+
+Input commands:
+- 0x10: Arm switch short press
+- 0x11: Arm switch long press
+- 0x12: Ignition button short press
+- 0x13: Ignition button long press
+- 0x14: Remote battery warning
+- 0x15: Remote battery critical
+
+Display commands
+- 0x20: Clear display
+- 0x21: Add display log line
+
+Communication commands
+- 0x30: Ping
+- 0x31: Comms link issues
+
+**Data**: a char[21] array containing the data payload
+
+##### Sending packets
+
+Packets are sent using the xxx function.
+If a packet hasn't been sent for 500ms, the base station will transmit a ping packet to which the remote will respond.
+
+##### Receiving packets
+
+
+
 
 ## To do
 
 - Implement protocol to send commands from remote to base
 - Implement protocol to send state info and messages from base to remote
+- Signal strength (https://esp32.com/viewtopic.php?t=13889)

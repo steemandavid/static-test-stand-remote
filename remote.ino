@@ -31,23 +31,14 @@ void setup(void) {
   startToggleTask(LED_BUILTIN, 3.0); // Toggle pin according to frequency in Hz
   startToggleTask(LED_BUTTON, 0.5); // Toggle pin according to frequency in Hz
 
-  beepBuzzer(BUZZER, 5, 200, 500); // Beep 5 times, 200ms on, 200ms off
-  delay(5000);                      // Wait for 5 seconds
+//  beepBuzzer(BUZZER, 5, 200, 500); // Beep 5 times, 200ms on, 200ms off
+//  delay(1000);                      // Wait for 5 seconds
 }
 
 
 void loop(void) {
-
-//  ClearContents(&MessageToSend);
-  MessageToSend.BaseState++;
-  MessageToSend.BaseState=random(0,999999);
-  Serial.printf("MessageToSend.BaseState: %i\n", MessageToSend.BaseState);
-  EspNowSend(&MessageToSend);
-
-  UpdateDisplay();
-
-  Serial.println("\n*");
-  vTaskDelay( 1000 / portTICK_PERIOD_MS );   //xxx debug
+//  Serial.println("*");
+//  vTaskDelay( 1000 / portTICK_PERIOD_MS );   //xxx debug
 }
 
 

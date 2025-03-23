@@ -6,16 +6,12 @@
 
 typedef struct __attribute__((packed)) MsgStruct {  // "__attribute__((packed))" ensure that the compiler does not add padding
     uint8_t BaseState;
-    uint16_t TxRxFails;
-    uint8_t VbatRemote;
-    bool Button_Button;
-    bool Switch_Arm;
-    bool Button_LED;
-    bool Buzzer;
-    char DisplayLine[10];
+    uint8_t Command;
+    char Data[21];
 } MsgStruct;
 
 extern uint8_t broadcastAddress[6]; // Fix: Make broadcastAddress available globally
+extern int lastRssi;
 
 bool EspNowInit(void);
 void EspNowSend(struct MsgStruct *Msg);

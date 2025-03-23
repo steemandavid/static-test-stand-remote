@@ -2,6 +2,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "RTOS.h"
+#include "SSD1306.h"
 
 
 // RTOS task handles
@@ -9,6 +10,7 @@ TaskHandle_t xHandleMainLoop = NULL;
 TaskHandle_t xHandleUpdateDisplay = NULL;
 TaskHandle_t xHandleIOhandler = NULL;
 TaskHandle_t xHandleButton_handler = NULL;
+TaskHandle_t xUpdateDisplayTaskHandle = NULL;
 
 
 void MainLoopTask(void *parameter) {
@@ -23,12 +25,24 @@ void MainLoopTask(void *parameter) {
 void SetupRTOSTasks() {
   Serial.println("Starting SetupRTOSTasks()...");
   // Function name of the task, Name of the task, Stack size (bytes), Parameter to pass, Task priority, Task handle, pin to a specific Core
+
+  // Creat MainLoop task
   BaseType_t xReturned;
   xReturned = xTaskCreatePinnedToCore(MainLoopTask, "MainLoopTask", 4096, NULL, MAINLOOPTASKPRIORITY, &xHandleMainLoop, MAINLOOPTASKCORE);
   if (xReturned != pdPASS) {
     Serial.println(F("Error: MainLoop task creation failed."));
   } else {
     Serial.println(F("Pass: MainLoop task creation succesfull."));
+  }
+  Serial.print("Free heap after creating Task: ");
+  Serial.println(xPortGetFreeHeapSize());
+
+  // Create display handler task
+  xReturned = xTaskCreatePinnedToCore(UpdateDisplayTask, "UpdateDisplayTask", 4096, NULL, UPDATEDISPLAYTASKPRIORITY, &xHandleUpdateDisplay, UPDATEDISPLAYTASKCORE);
+  if (xReturned != pdPASS) {
+    Serial.println(F("Error: UpdateDisplay task creation failed."));
+  } else {
+    Serial.println(F("Pass: UpdateDisplay task creation succesfull."));
   }
   Serial.print("Free heap after creating Task: ");
   Serial.println(xPortGetFreeHeapSize());
