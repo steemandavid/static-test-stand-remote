@@ -8,6 +8,8 @@
 #include "debounce.h"
 #include "outputs.h"
 #include "buzzer.h"
+#include "battery.h"
+#include "handlemessage.h"
 
 
 MsgStruct MessageReceived, MessageReceivedPrev, MessageToSend;
@@ -21,6 +23,7 @@ void setup(void) {
   SetupDisplay();  // Initialize SSD1306 OLED DISPLAY
   SetupButtons();  // Initialize button detection
   SetupRTOSTasks(); // Start RTOS tasks
+  SetupBatteryMonitor(); // Start battery monitor task
 
   MessageToSend.BaseState = 0;
 
@@ -28,17 +31,18 @@ void setup(void) {
   Serial.println(__FILE__);
   Serial.println("\nSetup() complete\n");
 
-  startToggleTask(LED_BUILTIN, 3.0); // Toggle pin according to frequency in Hz
-  startToggleTask(LED_BUTTON, 0.5); // Toggle pin according to frequency in Hz
+  startToggleTask(LED_BUILTIN, 5.0); // Toggle pin according to frequency in Hz
+//  startToggleTask(LED_BUTTON, 0.5); // Toggle pin according to frequency in Hz
 
-//  beepBuzzer(BUZZER, 5, 200, 500); // Beep 5 times, 200ms on, 200ms off
+  beepBuzzer(BUZZER, 1, 100, 500); // Beep 5 times, 100ms on, 500ms off
 //  delay(1000);                      // Wait for 5 seconds
 }
 
 
 void loop(void) {
 //  Serial.println("*");
-//  vTaskDelay( 1000 / portTICK_PERIOD_MS );   //xxx debug
+  printf("BatteryVoltage: %f\n", BatteryVoltage);
+  vTaskDelay( 1000 / portTICK_PERIOD_MS );   //xxx debug
 }
 
 
