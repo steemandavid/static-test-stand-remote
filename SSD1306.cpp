@@ -11,6 +11,13 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 extern UpdateDisplayStruct DisplayData = {0, 0, 99, "", "", "", "", ""};
 
+void AddDisplayLine(char data[21]) {
+    for (int i = 0; i < 4; i++) {
+      DisplayData.Line[i] = DisplayData.Line[i+1]; // shift lines up by one line
+    }
+    DisplayData.Line[4] = data; // add newly received data to the bottom/last line
+}
+
 
 void UpdateDisplayTask(void *pvParameters) {
   while (1) {
@@ -25,8 +32,12 @@ void UpdateDisplayTask(void *pvParameters) {
     display.setCursor(0, 0); 
     display.print(DisplayData.BaseState);
 
-    display.setCursor(SCREEN_WIDTH-4, 0); 
-    display.print(DisplayData.RSSI);
+    display.setCursor(SCREEN_WIDTH-(3*12), 0); // x = 3 characters x 12 pixels each from the right
+    if (DisplayData.RSSI < -98 || DisplayData.RSSI > 98) { // check out of bounds
+      display.print("***");
+    } else {
+      display.print(DisplayData.RSSI);
+    }
 
     // Set smaller text size and display lines 2-6
     display.setTextSize(1); 

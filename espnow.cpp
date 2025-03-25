@@ -2,12 +2,14 @@
 #include "espnow.h"
 #include "SSD1306.h"
 
+
 uint8_t broadcastAddress[] = {0xE4, 0x65, 0xB8, 0x25, 0x8A, 0xA0}; // base station
 //uint8_t broadcastAddress[] = {0x10, 0x97, 0xBD, 0xCC, 0xED, 0xBC}; // remote
 esp_now_peer_info_t peerInfo;
 
-extern MsgStruct MessageReceived;
-extern MsgStruct MessageToSend;
+//extern MsgStruct MessageReceived;
+//extern MsgStruct MessageToSend;
+extern bool MessageReceivedFlag = false;
 
 
 void SetupEspNow() {
@@ -18,7 +20,6 @@ void SetupEspNow() {
   Serial.print("MAC Address for peer: ");
   Serial.println(WiFi.macAddress());
 }
-
 
 bool EspNowInit(void) {
   // Ensure WiFi is properly initialized
@@ -53,6 +54,8 @@ void EspNowSend(struct MsgStruct *Msg) {
     esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *)Msg, sizeof(*Msg));
     if (result != ESP_OK) {
         Serial.println("Send error");
+    } else {
+        printf("Message sent: %i, %i, %s\n", Msg->BaseState, Msg->Command, Msg->Data);
     }
 }
 
@@ -63,8 +66,9 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 }
 
 void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *incomingData, int len) {
-  DisplayData.RSSI = info->rx_ctrl->rssi; // Extract RSSI directly
+  DisplayData.RSSI = info->rx_ctrl->rssi;   // Extract RSSI directly
   memcpy(&MessageReceived, incomingData, sizeof(MessageReceived));
-  printf("Recv (OnDataRecv): %i %i %s\n", 
+  MessageReceivedFlag = true;   // signal that a new message is available
+  printf("Recv (OnDataRecv): %i, %i, %s\n", 
           MessageReceived.BaseState, MessageReceived.Command, MessageReceived.Data);
 }

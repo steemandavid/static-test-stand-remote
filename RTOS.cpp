@@ -3,6 +3,8 @@
 #include "freertos/task.h"
 #include "RTOS.h"
 #include "SSD1306.h"
+#include "espnow.h"
+#include "handlemessage.h"
 
 
 // RTOS task handles
@@ -17,8 +19,12 @@ void MainLoopTask(void *parameter) {
   Serial.println("Task MainLoop started.");
 
   while(1) {
-    Serial.print("%%%");
-    vTaskDelay( 500 / portTICK_PERIOD_MS );   //xxx debug
+//    Serial.print("%");
+    if (MessageReceivedFlag) { // new ESPNOW message has been received and is available
+      handleMessage(MessageReceived);
+      MessageReceivedFlag = false; // reset flag
+    }
+    vTaskDelay( 10 / portTICK_PERIOD_MS );   //xxx debug
   }
 }
 

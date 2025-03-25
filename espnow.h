@@ -4,14 +4,20 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
-typedef struct __attribute__((packed)) MsgStruct {  // "__attribute__((packed))" ensure that the compiler does not add padding
+
+typedef struct __attribute__((packed)) MsgStruct {  // "__attribute__((packed))" ensures that the compiler does not add padding
     uint8_t BaseState;
     uint8_t Command;
     char Data[21];
 } MsgStruct;
 
+extern MsgStruct MessageReceived;
+extern MsgStruct MessageToSend;
+extern bool MessageReceivedFlag;
+
 extern uint8_t broadcastAddress[6]; // Fix: Make broadcastAddress available globally
 extern int lastRssi;
+
 
 bool EspNowInit(void);
 void EspNowSend(struct MsgStruct *Msg);

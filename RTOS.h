@@ -2,7 +2,6 @@
 #define RTOS_H
 
 
-
 // define priorities for RTOS tasks 
 #define BUZZERBEEPTASKPRIORITY 5
 #define MAINLOOPTASKPRIORITY 10

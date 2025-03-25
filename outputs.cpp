@@ -1,16 +1,59 @@
 #include "outputs.h"
 #include "RTOS.h"
 
+#define MAX_TASKS 10
 
-TaskHandle_t toggleTaskHandle[10]; // Array to hold task handles (supports 10 tasks maximum)
-int taskCount = 0; // Count of currently active tasks
+TaskHandle_t toggleTaskHandle[MAX_TASKS] = { NULL };
+int togglePinMapping[MAX_TASKS] = { -1 };
+
+TaskHandle_t switchTaskHandle[MAX_TASKS] = { NULL };
+int switchPinMapping[MAX_TASKS] = { -1 };
 
 
-// RTOS task for toggling output at specified frequency
+// debug : there's still a bug in the code which causes tasks to restart when calling other tasks, and ESP32 sometimes crashing after repeatedly calling the same function
+
+void stopTask(int pin) {
+    // Stop toggle task if running
+    for (int i = 0; i < MAX_TASKS; i++) {
+        if (togglePinMapping[i] == pin) {
+            if (toggleTaskHandle[i] != NULL) {
+                vTaskDelete(toggleTaskHandle[i]);
+                toggleTaskHandle[i] = NULL;
+                togglePinMapping[i] = -1;
+                Serial.print("Stopped toggle task for pin ");
+                Serial.println(pin);
+            }
+        }
+        if (switchPinMapping[i] == pin) {
+            if (switchTaskHandle[i] != NULL) {
+                vTaskDelete(switchTaskHandle[i]);
+                switchTaskHandle[i] = NULL;
+                switchPinMapping[i] = -1;
+                Serial.print("Stopped switch task for pin ");
+                Serial.println(pin);
+            }
+        }
+    }
+}
+
+// === TOGGLE TASK ===
 void toggleTask(void *param) {
     int pin = *((int *)param);
-    float frequency = *((float *)param + 1);
-    int delayMs = (int)(1000.0 / (2.0 * frequency)); // Half-period in ms
+    float frequency = *((float *)((int *)param + 1));
+    int delayMs = (int)(1000.0 / (2.0 * frequency));
+
+    free(param);
+
+    if (pin < 0) {
+        vTaskDelete(NULL);
+        return;
+    }
+
+    Serial.print("Toggling pin ");
+    Serial.print(pin);
+    Serial.print(" at ");
+    Serial.print(frequency);
+    Serial.println(" Hz");
 
     while (1) {
         toggleOutput(pin);
@@ -19,56 +62,125 @@ void toggleTask(void *param) {
 }
 
 void startToggleTask(int pin, float frequency) {
-    // Ensure we don't exceed the maximum number of tasks
-    if (taskCount < 10) {
-        // Dynamically allocate memory for parameters
-        int *params = (int *)malloc(2 * sizeof(int)); 
-        if (params != NULL) {
-            params[0] = pin;
-            *((float *)(&params[1])) = frequency;  // Store frequency as a float
+    // Stop any existing task for the pin
+    stopTask(pin);
 
-            // Create the task
-            xTaskCreatePinnedToCore(
-                toggleTask, 
-                "ToggleTask", 
-                2048, 
-                params, 
-                TOGGLETASKPRIORITY, 
-                &toggleTaskHandle[taskCount], 
-                TOGGLETASKCORE
-            );
-            taskCount++; // Increment the task count
-        } else {
-            Serial.println("Failed to allocate memory for task parameters.");
-        }
-    } else {
-        Serial.println("Maximum number of tasks reached.");
+    if (frequency == 0) {
+        return; // Do nothing if frequency is zero
     }
-}
 
-void stopToggleTask(int pin) {
-    for (int i = 0; i < taskCount; i++) {
-        // Check if the task's pin matches the one we want to stop
-        if (*((int *)toggleTaskHandle[i]) == pin) {
-            vTaskDelete(toggleTaskHandle[i]);
-            toggleTaskHandle[i] = NULL;
-            taskCount--; // Decrease the task count
+    for (int i = 0; i < MAX_TASKS; i++) {
+        if (toggleTaskHandle[i] == NULL) {
+            void *params = malloc(sizeof(int) + sizeof(float));
+            if (params != NULL) {
+                *((int *)params) = pin;
+                *((float *)((int *)params + 1)) = frequency;
+
+                if (xTaskCreatePinnedToCore(
+                        toggleTask,
+                        "ToggleTask",
+                        4096,
+                        params,
+                        1,
+                        &toggleTaskHandle[i],
+                        1) == pdPASS) {
+                    togglePinMapping[i] = pin;
+                    Serial.print("Started toggle task for pin ");
+                    Serial.print(pin);
+                    Serial.print(" at ");
+                    Serial.print(frequency);
+                    Serial.println(" Hz");
+                } else {
+                    free(params);
+                    Serial.println("Failed to create toggle task.");
+                }
+            } else {
+                Serial.println("Failed to allocate memory for toggle task.");
+            }
             break;
         }
     }
 }
 
-// Toggle output state
+// === SWITCH TASK ===
+void switchPinOnForSeconds(void *param) {
+    int pin = *((int *)param);
+    int seconds = *((int *)param + 1);
+
+    free(param);
+
+    if (pin < 0) {
+        vTaskDelete(NULL);
+        return;
+    }
+
+    Serial.print("Switching pin ");
+    Serial.print(pin);
+    Serial.print(" ON for ");
+    Serial.print(seconds);
+    Serial.println(" seconds");
+
+    digitalWrite(pin, HIGH);
+    vTaskDelay(pdMS_TO_TICKS(seconds * 1000));
+    digitalWrite(pin, LOW);
+
+    Serial.print("Switching pin ");
+    Serial.print(pin);
+    Serial.println(" OFF");
+
+    vTaskDelete(NULL);
+}
+
+void startSwitchPinOnForSeconds(int pin, int seconds) {
+    // Stop any existing task for the pin
+    stopTask(pin);
+
+    if (seconds == 0) {
+        return; // Do nothing if seconds is zero
+    }
+
+    for (int i = 0; i < MAX_TASKS; i++) {
+        if (switchTaskHandle[i] == NULL) {
+            int *params = (int *)malloc(2 * sizeof(int));
+            if (params != NULL) {
+                params[0] = pin;
+                params[1] = seconds;
+
+                if (xTaskCreatePinnedToCore(
+                        switchPinOnForSeconds,
+                        "SwitchPinOnForSeconds",
+                        4096,
+                        params,
+                        1,
+                        &switchTaskHandle[i],
+                        1) == pdPASS) {
+                    switchPinMapping[i] = pin;
+                    Serial.print("Started switch task for pin ");
+                    Serial.print(pin);
+                    Serial.print(" for ");
+                    Serial.print(seconds);
+                    Serial.println(" seconds");
+                } else {
+                    free(params);
+                    Serial.println("Failed to create switch task.");
+                }
+            } else {
+                Serial.println("Failed to allocate memory for switch task.");
+            }
+            break;
+        }
+    }
+}
+
+// === OUTPUT CONTROL ===
 void toggleOutput(int pin) {
     digitalWrite(pin, !digitalRead(pin));
 }
 
-// Switch output on
 void switchOutputOn(int pin) {
     digitalWrite(pin, HIGH);
 }
 
-// Switch output off
 void switchOutputOff(int pin) {
     digitalWrite(pin, LOW);
 }

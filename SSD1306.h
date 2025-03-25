@@ -33,3 +33,4 @@ extern UpdateDisplayStruct DisplayData;
 
 void UpdateDisplayTask(void *pvParameters);
 void SetupDisplay();
+void AddDisplayLine(char data[21]);
