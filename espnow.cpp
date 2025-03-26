@@ -9,11 +9,9 @@ MsgStruct MessageReceived;
 MsgStruct MessageToSend;
 bool MessageReceivedFlag = false;
 
-QueueHandle_t xQueue;
-
-
-// Forward declaration for the task
-void EspNowSendTask(void *parameter);
+// RTOS queues for sending and receiving messages
+QueueHandle_t xSendQueue;
+QueueHandle_t xRecvQueue;
 
 void SetupEspNow() {
     Serial.println("Starting SetupEspNow...");
@@ -23,17 +21,29 @@ void SetupEspNow() {
         return;
     }
 
-    // Create RTOS queue for message handling
-    xQueue = xQueueCreate(10, sizeof(MsgStruct));
-    if (xQueue == NULL) {
-        Serial.println("Failed to create queue");
+    // Create RTOS queues
+    xSendQueue = xQueueCreate(10, sizeof(MsgStruct));
+    xRecvQueue = xQueueCreate(10, sizeof(MsgStruct));
+    
+    if (xSendQueue == NULL || xRecvQueue == NULL) {
+        Serial.println("Failed to create queues");
         return;
     }
 
-    // Create the task for handling ESPNOW sending
+    // Create the task for sending ESPNOW messages
     xTaskCreate(
         EspNowSendTask,
         "EspNowSendTask",
+        2048,
+        NULL,
+        1,
+        NULL
+    );
+
+    // Create the task for receiving ESPNOW messages
+    xTaskCreate(
+        EspNowRecvTask,
+        "EspNowRecvTask",
         2048,
         NULL,
         1,
@@ -73,8 +83,8 @@ bool EspNowInit(void) {
 
 void EspNowSend(struct MsgStruct *Msg) {
     // Send message to the queue
-    if (xQueueSend(xQueue, Msg, pdMS_TO_TICKS(100)) != pdTRUE) {
-        Serial.println("Failed to enqueue message");
+    if (xQueueSend(xSendQueue, Msg, pdMS_TO_TICKS(100)) != pdTRUE) {
+        Serial.println("Failed to enqueue message for sending");
     }
 }
 
@@ -83,13 +93,28 @@ void EspNowSendTask(void *parameter) {
 
     while (true) {
         // Wait for a message to be available in the queue
-        if (xQueueReceive(xQueue, &msg, portMAX_DELAY) == pdTRUE) {
+        if (xQueueReceive(xSendQueue, &msg, portMAX_DELAY) == pdTRUE) {
             esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *)&msg, sizeof(msg));
             if (result != ESP_OK) {
                 Serial.println("Send error");
             } else {
                 printf("Message sent: %i, %i, %s\n", msg.BaseState, msg.Command, msg.Data);
             }
+        }
+    }
+}
+
+void EspNowRecvTask(void *parameter) {
+    MsgStruct msg;
+
+    while (true) {
+        // Wait for a received message to be available in the queue
+        if (xQueueReceive(xRecvQueue, &msg, portMAX_DELAY) == pdTRUE) {
+            // Handle the received message
+            MessageReceived = msg;
+            MessageReceivedFlag = true;
+
+            printf("Message received: %i, %i, %s\n", msg.BaseState, msg.Command, msg.Data);
         }
     }
 }
@@ -103,11 +128,13 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
 }
 
 void OnDataRecv(const esp_now_recv_info_t *info, const uint8_t *incomingData, int len) {
-    if (len == sizeof(MessageReceived)) {
-        memcpy(&MessageReceived, incomingData, sizeof(MessageReceived));
-        MessageReceivedFlag = true;
-
-        printf("Recv (OnDataRecv): %i, %i, %s\n", 
-               MessageReceived.BaseState, MessageReceived.Command, MessageReceived.Data);
+    if (len == sizeof(MsgStruct)) {
+        MsgStruct msg;
+        memcpy(&msg, incomingData, sizeof(MsgStruct));
+        
+        // Add received message to the receive queue
+        if (xQueueSend(xRecvQueue, &msg, pdMS_TO_TICKS(100)) != pdTRUE) {
+            Serial.println("Failed to enqueue received message");
+        }
     }
 }

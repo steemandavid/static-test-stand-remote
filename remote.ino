@@ -12,7 +12,7 @@
 #include "handlemessage.h"
 
 
-MsgStruct MessageReceived, MessageReceivedPrev, MessageToSend;
+//MsgStruct MessageReceived, MessageReceivedPrev, MessageToSend;
 
 
 void setup(void) {
