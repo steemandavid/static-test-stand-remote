@@ -1,11 +1,15 @@
+#define THISFILENAME "pins.cpp"
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+
+#include <esp_log.h>
 #include <Arduino.h>
 #include <Wire.h>
 #include "pins.h"
 
-
+static const char *TAG = THISFILENAME;
 
 void SetupPins() {
-  Serial.println("Starting SetupPins()...");
+  ESP_LOGI(TAG, "Starting SetupPins()...");
 
   // Set up IO pins
   pinMode(BUTTON_BUTTON, INPUT_PULLUP); // Button input
@@ -18,5 +22,5 @@ void SetupPins() {
 
   // Set up I²C interface
   Wire.setPins(I2C_SDA, I2C_SCL);
-  Wire.begin(); // Start I²C bus
+  Wire.begin(); // Start I2C bus
 }

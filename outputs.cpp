@@ -1,5 +1,11 @@
+#define THISFILENAME "outputs.cpp"
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+
+#include <esp_log.h>
 #include "outputs.h"
 #include "RTOS.h"
+
+static const char *TAG = THISFILENAME;
 
 #define MAX_TASKS 10
 
@@ -20,8 +26,7 @@ void stopTask(int pin) {
                 vTaskDelete(toggleTaskHandle[i]);
                 toggleTaskHandle[i] = NULL;
                 togglePinMapping[i] = -1;
-                Serial.print("Stopped toggle task for pin ");
-                Serial.println(pin);
+                ESP_LOGI(TAG, "Stopped toggle task for pin %d", pin);
             }
         }
         if (switchPinMapping[i] == pin) {
@@ -29,8 +34,7 @@ void stopTask(int pin) {
                 vTaskDelete(switchTaskHandle[i]);
                 switchTaskHandle[i] = NULL;
                 switchPinMapping[i] = -1;
-                Serial.print("Stopped switch task for pin ");
-                Serial.println(pin);
+                ESP_LOGI(TAG, "Stopped switch task for pin %d", pin);
             }
         }
     }
@@ -49,11 +53,7 @@ void toggleTask(void *param) {
         return;
     }
 
-    Serial.print("Toggling pin ");
-    Serial.print(pin);
-    Serial.print(" at ");
-    Serial.print(frequency);
-    Serial.println(" Hz");
+    ESP_LOGI(TAG, "Toggling pin %d at %.2f Hz", pin, frequency);
 
     while (1) {
         toggleOutput(pin);
@@ -85,17 +85,13 @@ void startToggleTask(int pin, float frequency) {
                         &toggleTaskHandle[i],
                         1) == pdPASS) {
                     togglePinMapping[i] = pin;
-                    Serial.print("Started toggle task for pin ");
-                    Serial.print(pin);
-                    Serial.print(" at ");
-                    Serial.print(frequency);
-                    Serial.println(" Hz");
+                    ESP_LOGI(TAG, "Started toggle task for pin %d at %.2f Hz", pin, frequency);
                 } else {
                     free(params);
-                    Serial.println("Failed to create toggle task.");
+                    ESP_LOGE(TAG, "Failed to create toggle task.");
                 }
             } else {
-                Serial.println("Failed to allocate memory for toggle task.");
+                ESP_LOGE(TAG, "Failed to allocate memory for toggle task.");
             }
             break;
         }
@@ -114,19 +110,13 @@ void switchPinOnForSeconds(void *param) {
         return;
     }
 
-    Serial.print("Switching pin ");
-    Serial.print(pin);
-    Serial.print(" ON for ");
-    Serial.print(seconds);
-    Serial.println(" seconds");
+    ESP_LOGI(TAG, "Switching pin %d ON for %d seconds", pin, seconds);
 
     digitalWrite(pin, HIGH);
     vTaskDelay(pdMS_TO_TICKS(seconds * 1000));
     digitalWrite(pin, LOW);
 
-    Serial.print("Switching pin ");
-    Serial.print(pin);
-    Serial.println(" OFF");
+    ESP_LOGI(TAG, "Switching pin %d OFF", pin);
 
     vTaskDelete(NULL);
 }
@@ -155,17 +145,13 @@ void startSwitchPinOnForSeconds(int pin, int seconds) {
                         &switchTaskHandle[i],
                         1) == pdPASS) {
                     switchPinMapping[i] = pin;
-                    Serial.print("Started switch task for pin ");
-                    Serial.print(pin);
-                    Serial.print(" for ");
-                    Serial.print(seconds);
-                    Serial.println(" seconds");
+                    ESP_LOGI(TAG, "Started switch task for pin %d for %d seconds", pin, seconds);
                 } else {
                     free(params);
-                    Serial.println("Failed to create switch task.");
+                    ESP_LOGE(TAG, "Failed to create switch task.");
                 }
             } else {
-                Serial.println("Failed to allocate memory for switch task.");
+                ESP_LOGE(TAG, "Failed to allocate memory for switch task.");
             }
             break;
         }

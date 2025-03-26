@@ -1,6 +1,8 @@
 #ifndef DEBOUNCE_H
 #define DEBOUNCE_H
 
+#define THISFILENAME "debounce.h"
+
 #include <Arduino.h>
 
 #define DEBOUNCE_TIME_MS 50     // 50 ms for debouncing

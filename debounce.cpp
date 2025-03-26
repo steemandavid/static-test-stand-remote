@@ -1,7 +1,12 @@
+#define THISFILENAME "debounce.cpp"
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+
+#include <esp_log.h>
 #include "debounce.h"
 #include "pins.h"
 #include "RTOS.h"
 
+static const char *TAG = THISFILENAME;
 
 Button buttons[] = {
   {BUTTON_BUTTON, HIGH, HIGH, HIGH, 0, 0, false},  // BUTTON_BUTTON
@@ -16,15 +21,15 @@ void SetupButtons() {
     pinMode(buttons[i].pin, INPUT_PULLUP);
   }
   // Create and start the button detection task
-//  xTaskCreate(buttonTask, "ButtonTask", 2048, NULL, BUTTONTASKPRIORITY, NULL);
+  //  xTaskCreate(buttonTask, "ButtonTask", 2048, NULL, BUTTONTASKPRIORITY, NULL);
   xTaskCreatePinnedToCore(
-    buttonTask,  // Task function
-    "buttonTask",    // Task name
-    2048,            // Stack size
-    NULL,          // Task parameters
-    BUTTONTASKPRIORITY,  // Priority
-    NULL,            // Task handle
-    BUTTONTASKCORE    // Pin to Core
+    buttonTask,        // Task function
+    "buttonTask",      // Task name
+    2048,              // Stack size
+    NULL,              // Task parameters
+    BUTTONTASKPRIORITY,// Priority
+    NULL,              // Task handle
+    BUTTONTASKCORE     // Pin to Core
   );
 }
 
@@ -64,16 +69,12 @@ int checkButtonEvent(Button &button) {
     unsigned long pressDuration = millis() - button.pressStartTime;
 
     if (pressDuration >= HOLD_THRESHOLD_MS) {
-      Serial.print("Button on pin ");
-      Serial.print(button.pin);
-      Serial.println(" Long Press Detected!");
+      ESP_LOGI(TAG, "Button on pin %d Long Press Detected!", button.pin);
       
       button.eventFired = false;
       return 2; // Long press
     } else {
-      Serial.print("Button on pin ");
-      Serial.print(button.pin);
-      Serial.println(" Short Press Detected!");
+      ESP_LOGI(TAG, "Button on pin %d Short Press Detected!", button.pin);
       
       button.eventFired = false;
       return 1; // Short press
@@ -89,11 +90,9 @@ void buttonTask(void *pvParameters) {
     for (int i = 0; i < numButtons; ++i) {
       int event = checkButtonEvent(buttons[i]);
       if (event == 1) {
-        Serial.print("Short press detected on button ");
-        Serial.println(buttons[i].pin);
+        ESP_LOGI(TAG, "Short press detected on button %d", buttons[i].pin);
       } else if (event == 2) {
-        Serial.print("Long press detected on button ");
-        Serial.println(buttons[i].pin);
+        ESP_LOGI(TAG, "Long press detected on button %d", buttons[i].pin);
       }
     }
     vTaskDelay(10 / portTICK_PERIOD_MS);

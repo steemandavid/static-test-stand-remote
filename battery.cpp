@@ -1,3 +1,7 @@
+#define THISFILENAME "battery.cpp"
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+
+#include <esp_log.h>
 #include "battery.h"
 #include "RTOS.h"
 

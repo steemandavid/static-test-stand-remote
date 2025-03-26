@@ -1,3 +1,7 @@
+#ifndef SSD1306_H
+#define SSD1306_H
+
+#define THISFILENAME "SSD1306.h"
 
 // SSD1306 OLED display
 #include <SPI.h>
@@ -34,3 +38,6 @@ extern UpdateDisplayStruct DisplayData;
 void UpdateDisplayTask(void *pvParameters);
 void SetupDisplay();
 void AddDisplayLine(char data[21]);
+
+
+#endif

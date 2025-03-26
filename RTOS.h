@@ -1,6 +1,8 @@
 #ifndef RTOS_H
 #define RTOS_H
 
+#define THISFILENAME "RTOS.h"
+
 
 // define priorities for RTOS tasks 
 #define BUZZERBEEPTASKPRIORITY 5

@@ -1,6 +1,8 @@
 #ifndef PINS_H
 #define PINS_H
 
+#define THISFILENAME "pins.h"
+
 // I/O defines
 //#define LED1 15
 //#define LED2 2

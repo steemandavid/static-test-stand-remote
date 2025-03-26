@@ -1,11 +1,14 @@
+#define THISFILENAME "RTOS.cpp"
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+
 #include <Arduino.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+#include <esp_log.h>
 #include "RTOS.h"
 #include "SSD1306.h"
 #include "espnow.h"
 #include "handlemessage.h"
 
+static const char *TAG = THISFILENAME;
 
 // RTOS task handles
 TaskHandle_t xHandleMainLoop = NULL;
@@ -14,51 +17,48 @@ TaskHandle_t xHandleIOhandler = NULL;
 TaskHandle_t xHandleButton_handler = NULL;
 TaskHandle_t xUpdateDisplayTaskHandle = NULL;
 
-
 void MainLoopTask(void *parameter) {
-  Serial.println("Task MainLoop started.");
+  ESP_LOGI(TAG, "Task MainLoop started.");
 
   while(1) {
-//    Serial.print("%");
+//    ESP_LOGI(TAG, "%%");
     if (MessageReceivedFlag) { // new ESPNOW message has been received and is available
       handleMessage(MessageReceived);
       MessageReceivedFlag = false; // reset flag
     }
-    vTaskDelay( 10 / portTICK_PERIOD_MS );   //xxx debug
+    vTaskDelay(10 / portTICK_PERIOD_MS);   // xxx debug
   }
 }
 
 void SetupRTOSTasks() {
-  Serial.println("Starting SetupRTOSTasks()...");
+  ESP_LOGI(TAG, "Starting SetupRTOSTasks()...");
   // Function name of the task, Name of the task, Stack size (bytes), Parameter to pass, Task priority, Task handle, pin to a specific Core
 
-  // Creat MainLoop task
+  // Create MainLoop task
   BaseType_t xReturned;
   xReturned = xTaskCreatePinnedToCore(MainLoopTask, "MainLoopTask", 4096, NULL, MAINLOOPTASKPRIORITY, &xHandleMainLoop, MAINLOOPTASKCORE);
   if (xReturned != pdPASS) {
-    Serial.println(F("Error: MainLoop task creation failed."));
+    ESP_LOGE(TAG, "Error: MainLoop task creation failed.");
   } else {
-    Serial.println(F("Pass: MainLoop task creation succesfull."));
+    ESP_LOGI(TAG, "Pass: MainLoop task creation successful.");
   }
-  Serial.print("Free heap after creating Task: ");
-  Serial.println(xPortGetFreeHeapSize());
+  ESP_LOGI(TAG, "Free heap after creating Task: %d", xPortGetFreeHeapSize());
 
   // Create display handler task
   xReturned = xTaskCreatePinnedToCore(UpdateDisplayTask, "UpdateDisplayTask", 4096, NULL, UPDATEDISPLAYTASKPRIORITY, &xHandleUpdateDisplay, UPDATEDISPLAYTASKCORE);
   if (xReturned != pdPASS) {
-    Serial.println(F("Error: UpdateDisplay task creation failed."));
+    ESP_LOGE(TAG, "Error: UpdateDisplay task creation failed.");
   } else {
-    Serial.println(F("Pass: UpdateDisplay task creation succesfull."));
+    ESP_LOGI(TAG, "Pass: UpdateDisplay task creation successful.");
   }
-  Serial.print("Free heap after creating Task: ");
-  Serial.println(xPortGetFreeHeapSize());
+  ESP_LOGI(TAG, "Free heap after creating Task: %d", xPortGetFreeHeapSize());
 
-//  vTaskSuspend(xHandleUpdateDisplay);
-//  vTaskSuspend(xHandleButton_handler);
-//  vTaskSuspend(xHandleIOhandler);
-//  vTaskSuspend(xHandleMainLoopTask);
-  Serial.println("SetupRTOSTasks(): vTaskSuspend completed.");
-  //Serial.println("SetupRTOSTasks(): Starting scheduler.");
-  //vTaskStartScheduler();
-  //Serial.println("SetupRTOSTasks(): Started scheduler.");
+  // vTaskSuspend(xHandleUpdateDisplay);
+  // vTaskSuspend(xHandleButton_handler);
+  // vTaskSuspend(xHandleIOhandler);
+  // vTaskSuspend(xHandleMainLoopTask);
+  ESP_LOGI(TAG, "SetupRTOSTasks(): vTaskSuspend completed.");
+  // ESP_LOGI(TAG, "SetupRTOSTasks(): Starting scheduler.");
+  // vTaskStartScheduler();
+  // ESP_LOGI(TAG, "SetupRTOSTasks(): Started scheduler.");
 }

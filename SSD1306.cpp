@@ -1,13 +1,18 @@
-#include <Arduino.h>
+#define THISFILENAME "SSD1306.cpp"
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+
+//#include <Arduino.h>
+#include <esp_log.h>
 #include "SSD1306.h"
 #include "RTOS.h"
+
+static const char *TAG = THISFILENAME;
 
 // Define the display object
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // Define task handle
 //TaskHandle_t xUpdateDisplayTaskHandle = NULL;
-
 
 extern UpdateDisplayStruct DisplayData = {0, 0, 99, "", "", "", "", ""};
 
@@ -17,7 +22,6 @@ void AddDisplayLine(char data[21]) {
     }
     DisplayData.Line[4] = data; // add newly received data to the bottom/last line
 }
-
 
 void UpdateDisplayTask(void *pvParameters) {
   while (1) {
@@ -57,13 +61,13 @@ void UpdateDisplayTask(void *pvParameters) {
 void SetupDisplay() {
   // SSD1306 OLED DISPLAY ///////////////////////////////////////
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
-  Serial.println("Starting SetupDisplay()...");
+  ESP_LOGI(TAG, "Starting SetupDisplay()...");
   if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-    Serial.println(F("SSD1306 allocation failed"));
+    ESP_LOGE(TAG, "SSD1306 allocation failed");
     for(;;); // Don't proceed, loop forever
     // Add error handling here xxx todo
   } else {
-    Serial.println(F("SSD1306 allocation succesfull"));
+    ESP_LOGI(TAG, "SSD1306 allocation successful");
   }
   vTaskDelay( 100 / portTICK_PERIOD_MS ); // give the OLED some time to initialize
   display.setFont(); // Use default display font

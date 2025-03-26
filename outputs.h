@@ -1,6 +1,8 @@
 #ifndef OUTPUTS_H
 #define OUTPUTS_H
 
+#define THISFILENAME "outputs.h"
+
 #include <Arduino.h>
 
 void toggleOutput(int pin);

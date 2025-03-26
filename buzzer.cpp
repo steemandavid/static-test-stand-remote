@@ -1,6 +1,9 @@
+#define THISFILENAME "buzzer.cpp"
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+
+#include <esp_log.h>
 #include "buzzer.h"
 #include "RTOS.h"
-
 
 
 void beepBuzzer(int pin, int beepCount, int onTime, int offTime) {
